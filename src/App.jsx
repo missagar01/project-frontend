@@ -4,16 +4,30 @@ import { useState, useEffect } from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
 import LoginPage from "./pages/LoginPage"
 import AdminDashboard from "./pages/Dashboard"
-import AdminAssignTask from "./pages/startingPlanning/AssignTask"
-// import AllTasks from "./pages/admin/AllTasks"
-import DataPage from "./pages/startingPlanning/DataPage"
-import AdminDataPage from "./pages/startingPlanning/admin-data-page"
-import AccountDataPage from "./pages/delegation"
-import QuickTask from "./pages/QuickTask" 
-import AdminDelegationTask from "./pages/delegation-data"
-import "./index.css"
-// import Demo from "./pages/user/Demo"
 import Setting from "./pages/Setting"
+import "./index.css"
+
+import DefineObject from "./pages/startingPlanning/DefineObject"
+import SiteSurvey from "./pages/startingPlanning/SiteSurvey"
+import DesignDrawing from "./pages/startingPlanning/DesignDrawing"
+import EstimateBudget from "./pages/startingPlanning/EstimateBudget"
+import Scheduling from "./pages/startingPlanning/Scheduling"
+import ResourcePlanning from "./pages/startingPlanning/ResourcePlanning"
+import Execution from "./pages/startingPlanning/Execution"
+
+import FinishingDoorWindow from "./pages/finishing/DoorWindow"
+import FinishingFlooring from "./pages/finishing/Flooring"
+import FinishingPainting from "./pages/finishing/Painting"
+import FinishingPlaster from "./pages/finishing/Plaster"
+
+import SiteWorkFinishing from "./pages/siteWork/Finishing"
+import SiteWorkFoundation from "./pages/siteWork/Foundation"
+import SiteWorkStructure from "./pages/siteWork/Structure"
+
+import StructureBeams from "./pages/structure/Beams"
+import StructureColumns from "./pages/structure/Columns"
+import StructureSlab from "./pages/structure/Slab"
+import StructureWall from "./pages/structure/Wall"
 
 // Auth wrapper component to protect routes
 const ProtectedRoute = ({ children, allowedRoles = [] }) => {
@@ -34,32 +48,6 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 }
 
 function App() {
-  // const [darkMode, setDarkMode] = useState(false)
-
-  // useEffect(() => {
-  //   // Check for user preference
-  //   if (
-  //     localStorage.theme === "dark" ||
-  //     (!("theme" in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches)
-  //   ) {
-  //     setDarkMode(true)
-  //     document.documentElement.classList.add("dark")
-  //   } else {
-  //     setDarkMode(false)
-  //     document.documentElement.classList.remove("dark")
-  //   }
-  // }, [])
-
-  // const toggleDarkMode = () => {
-  //   setDarkMode(!darkMode)
-  //   if (darkMode) {
-  //     document.documentElement.classList.remove("dark")
-  //     localStorage.theme = "light"
-  //   } else {
-  //     document.documentElement.classList.add("dark")
-  //     localStorage.theme = "dark"
-  //   }
-  // }
 
   return (
     <Router>
@@ -83,69 +71,164 @@ function App() {
             </ProtectedRoute>
           }
         />
+
         <Route
-          path="/dashboard/quick-task"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <QuickTask />
-            </ProtectedRoute>
-          }
-        />
-
-
-        {/* Assign Task route - only for admin */}
-        <Route
-          path="/dashboard/assign-task"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminAssignTask />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/delegation-task"
-          element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDelegationTask/>
-            </ProtectedRoute>
-          }
-        />
-
-         {/* Delegation route for user */}
-          <Route
-          path="/dashboard/delegation"
-          element={
-            <ProtectedRoute>
-              <AccountDataPage/>
-            </ProtectedRoute>
-          }
-        />
-
-             <Route
           path="/dashboard/setting"
           element={
             <ProtectedRoute>
-              <Setting/>
+              <Setting />
             </ProtectedRoute>
           }
         />
 
-        {/* Data routes */}
+        {/* Starting Planning Routes */}
         <Route
-          path="/dashboard/data/:category"
+          path="/dashboard/starting-planning/define-object"
           element={
             <ProtectedRoute>
-              <DataPage />
+              <DefineObject />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/starting-planning/site-survey"
+          element={
+            <ProtectedRoute>
+              <SiteSurvey />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/starting-planning/design-drawing"
+          element={
+            <ProtectedRoute>
+              <DesignDrawing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/starting-planning/estimate-budget"
+          element={
+            <ProtectedRoute>
+              <EstimateBudget />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/starting-planning/scheduling"
+          element={
+            <ProtectedRoute>
+              <Scheduling />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/starting-planning/resource-planning"
+          element={
+            <ProtectedRoute>
+              <ResourcePlanning />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/starting-planning/execution"
+          element={
+            <ProtectedRoute>
+              <Execution />
             </ProtectedRoute>
           }
         />
 
-        {/* Specific route for Admin Data Page */}
+        {/* Site Work Routes */}
         <Route
-          path="/dashboard/data/admin"
+          path="/dashboard/site-work/finishing"
           element={
-            <ProtectedRoute allowedRoles={["admin"]}>
-              <AdminDataPage />
+            <ProtectedRoute>
+              <SiteWorkFinishing />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/site-work/foundation"
+          element={
+            <ProtectedRoute>
+              <SiteWorkFoundation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/site-work/structure"
+          element={
+            <ProtectedRoute>
+              <SiteWorkStructure />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Structure Routes */}
+        <Route
+          path="/dashboard/structure/beams"
+          element={
+            <ProtectedRoute>
+              <StructureBeams />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/structure/columns"
+          element={
+            <ProtectedRoute>
+              <StructureColumns />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/structure/slab"
+          element={
+            <ProtectedRoute>
+              <StructureSlab />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/structure/wall"
+          element={
+            <ProtectedRoute>
+              <StructureWall />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Finishing Routes */}
+        <Route
+          path="/dashboard/finishing/door-window"
+          element={
+            <ProtectedRoute>
+              <FinishingDoorWindow />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/finishing/flooring"
+          element={
+            <ProtectedRoute>
+              <FinishingFlooring />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/finishing/painting"
+          element={
+            <ProtectedRoute>
+              <FinishingPainting />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/finishing/plaster"
+          element={
+            <ProtectedRoute>
+              <FinishingPlaster />
             </ProtectedRoute>
           }
         />
@@ -153,10 +236,6 @@ function App() {
         {/* Backward compatibility redirects */}
         <Route path="/admin/*" element={<Navigate to="/dashboard/admin" replace />} />
         <Route path="/admin/dashboard" element={<Navigate to="/dashboard/admin" replace />} />
-        <Route path="/admin/quick" element={<Navigate to="/dashboard/quick-task" replace />} />
-        <Route path="/admin/assign-task" element={<Navigate to="/dashboard/assign-task" replace />} />
-        <Route path="/admin/delegation-task" element={<Navigate to="/dashboard/delegation-task" replace />} />
-        <Route path="/admin/data/:category" element={<Navigate to="/dashboard/data/:category" replace />} />
         <Route path="/user/*" element={<Navigate to="/dashboard/admin" replace />} />
       </Routes>
     </Router>

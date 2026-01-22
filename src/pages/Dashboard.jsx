@@ -17,7 +17,7 @@ import {
   Cell
 } from "recharts"
 import { useDispatch, useSelector } from "react-redux"
-import {  completeTaskInTable, dashboardData, overdueTaskInTable, pendingTaskInTable, totalTaskInTable, } from "../redux/slice/dashboardSlice.js"
+import { completeTaskInTable, dashboardData, overdueTaskInTable, pendingTaskInTable, totalTaskInTable, } from "../redux/slice/dashboardSlice.js"
 import { countTotalTaskApi, fetchDashboardDataApi } from "../redux/api/dashboardApi.js"
 
 export default function AdminDashboard() {
@@ -28,8 +28,8 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("overview")
   // New state for dashboard-wide staff filter
-const [dashboardStaffFilter, setDashboardStaffFilter] = useState("all")
-const [availableStaff, setAvailableStaff] = useState([])
+  const [dashboardStaffFilter, setDashboardStaffFilter] = useState("all")
+  const [availableStaff, setAvailableStaff] = useState([])
 
   // State for department data
   const [departmentData, setDepartmentData] = useState({
@@ -66,29 +66,29 @@ const [availableStaff, setAvailableStaff] = useState([])
     completionRate: 0
   });
 
-  const {dashboard,totalTask,completeTask,pendingTask,overdueTask}=useSelector((state)=>state.dashBoard)
-  const dispatch =useDispatch();
+  const { dashboard, totalTask, completeTask, pendingTask, overdueTask } = useSelector((state) => state.dashBoard)
+  const dispatch = useDispatch();
 
   // Updated date parsing function to handle both formats
   const parseTaskStartDate = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string') return null;
-    
+
     // Handle DD/MM/YYYY format (with or without time)
     if (dateStr.includes('/')) {
       // Split by space first to separate date and time
       const parts = dateStr.split(' ');
       const datePart = parts[0]; // "25/08/2025"
-      
+
       const dateComponents = datePart.split('/');
       if (dateComponents.length !== 3) return null;
-      
+
       const [day, month, year] = dateComponents.map(Number);
-      
+
       if (!day || !month || !year) return null;
-      
+
       // Create date object (month is 0-indexed)
       const date = new Date(year, month - 1, day);
-      
+
       // If there's time component, parse it
       if (parts.length > 1) {
         const timePart = parts[1]; // "09:00:00"
@@ -98,10 +98,10 @@ const [availableStaff, setAvailableStaff] = useState([])
           date.setHours(hours || 0, minutes || 0, seconds || 0);
         }
       }
-      
+
       return isNaN(date) ? null : date;
     }
-    
+
     // Fallback: Try ISO format
     const parsed = new Date(dateStr);
     return isNaN(parsed) ? null : parsed;
@@ -222,221 +222,221 @@ const [availableStaff, setAvailableStaff] = useState([])
   };
 
   // Updated fetch function to support both checklist and delegation with proper date filtering
- // The main issue is in the fetchDepartmentData function. Here are the key fixes:
+  // The main issue is in the fetchDepartmentData function. Here are the key fixes:
 
-// 1. Move the dashboard staff filter application to the right place
-// Replace the existing fetchDepartmentData function with this corrected version:
+  // 1. Move the dashboard staff filter application to the right place
+  // Replace the existing fetchDepartmentData function with this corrected version:
 
-// Replace the existing fetchDepartmentData function with this corrected version:
+  // Replace the existing fetchDepartmentData function with this corrected version:
 
-const fetchDepartmentData = async () => {
-  try {
-    // Get all data first
-    const data = await fetchDashboardDataApi(dashboardType);
-    const username = localStorage.getItem('user-name');
-    const userRole = localStorage.getItem('role');
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+  const fetchDepartmentData = async () => {
+    try {
+      // Get all data first
+      const data = await fetchDashboardDataApi(dashboardType);
+      const username = localStorage.getItem('user-name');
+      const userRole = localStorage.getItem('role');
+      const today = new Date();
+      today.setHours(23, 59, 59, 999); // End of today
 
-    let totalTasks = 0;
-    let completedTasks = 0;
-    let pendingTasks = 0;
-    let overdueTasks = 0;
-    let completedRatingOne = 0;
-    let completedRatingTwo = 0;
-    let completedRatingThreePlus = 0;
+      let totalTasks = 0;
+      let completedTasks = 0;
+      let pendingTasks = 0;
+      let overdueTasks = 0;
+      let completedRatingOne = 0;
+      let completedRatingTwo = 0;
+      let completedRatingThreePlus = 0;
 
-    const monthlyData = {
-      Jan: { completed: 0, pending: 0 },
-      Feb: { completed: 0, pending: 0 },
-      Mar: { completed: 0, pending: 0 },
-      Apr: { completed: 0, pending: 0 },
-      May: { completed: 0, pending: 0 },
-      Jun: { completed: 0, pending: 0 },
-      Jul: { completed: 0, pending: 0 },
-      Aug: { completed: 0, pending: 0 },
-      Sep: { completed: 0, pending: 0 },
-      Oct: { completed: 0, pending: 0 },
-      Nov: { completed: 0, pending: 0 },
-      Dec: { completed: 0, pending: 0 }
-    };
+      const monthlyData = {
+        Jan: { completed: 0, pending: 0 },
+        Feb: { completed: 0, pending: 0 },
+        Mar: { completed: 0, pending: 0 },
+        Apr: { completed: 0, pending: 0 },
+        May: { completed: 0, pending: 0 },
+        Jun: { completed: 0, pending: 0 },
+        Jul: { completed: 0, pending: 0 },
+        Aug: { completed: 0, pending: 0 },
+        Sep: { completed: 0, pending: 0 },
+        Oct: { completed: 0, pending: 0 },
+        Nov: { completed: 0, pending: 0 },
+        Dec: { completed: 0, pending: 0 }
+      };
 
-    // FIRST: Filter data by dashboard type - for checklist, only include tasks up to today
-    let filteredData = data;
-    if (dashboardType === "checklist") {
-      filteredData = data.filter(task => {
-        const taskDate = parseTaskStartDate(task.task_start_date);
-        return taskDate && taskDate <= today;
-      });
-    }
-
-    // Extract unique staff names for the dropdown BEFORE staff filtering
-    const uniqueStaff = [...new Set(data.map(task => task.name).filter(name => name && name.trim() !== ""))];
-    setAvailableStaff(uniqueStaff);
-
-    // SECOND: Apply dashboard staff filter ONLY if not "all"
-    if (dashboardStaffFilter !== "all") {
-      filteredData = filteredData.filter(task => 
-        task.name && task.name.toLowerCase() === dashboardStaffFilter.toLowerCase()
-      );
-    }
-
-    // Process tasks with your field names
-    const processedTasks = filteredData.map(task => {
-      // Skip if not assigned to current user (for non-admin)
-      if (userRole !== "admin" && task.name?.toLowerCase() !== username?.toLowerCase()) {
-        return null;
+      // FIRST: Filter data by dashboard type - for checklist, only include tasks up to today
+      let filteredData = data;
+      if (dashboardType === "checklist") {
+        filteredData = data.filter(task => {
+          const taskDate = parseTaskStartDate(task.task_start_date);
+          return taskDate && taskDate <= today;
+        });
       }
 
-      const taskStartDate = parseTaskStartDate(task.task_start_date);
-      const completionDate = task.submission_date ? parseTaskStartDate(task.submission_date) : null;
-      
-      let status = "pending";
-      if (completionDate) {
-        status = "completed";
-      } else if (taskStartDate && isDateInPast(taskStartDate)) {
-        status = "overdue";
+      // Extract unique staff names for the dropdown BEFORE staff filtering
+      const uniqueStaff = [...new Set(data.map(task => task.name).filter(name => name && name.trim() !== ""))];
+      setAvailableStaff(uniqueStaff);
+
+      // SECOND: Apply dashboard staff filter ONLY if not "all"
+      if (dashboardStaffFilter !== "all") {
+        filteredData = filteredData.filter(task =>
+          task.name && task.name.toLowerCase() === dashboardStaffFilter.toLowerCase()
+        );
       }
 
-      // Count based on status
-      if (status === "completed") {
-        completedTasks++;
-        if (dashboardType === "delegation") {
-          if (task.color_code_for === 1) completedRatingOne++;
-          else if (task.color_code_for === 2) completedRatingTwo++;
-          else if (task.color_code_for >= 3) completedRatingThreePlus++;
+      // Process tasks with your field names
+      const processedTasks = filteredData.map(task => {
+        // Skip if not assigned to current user (for non-admin)
+        if (userRole !== "admin" && task.name?.toLowerCase() !== username?.toLowerCase()) {
+          return null;
         }
-      } else {
-        pendingTasks++;
-        if (status === "overdue") overdueTasks++;
-      }
 
-      totalTasks++;
+        const taskStartDate = parseTaskStartDate(task.task_start_date);
+        const completionDate = task.submission_date ? parseTaskStartDate(task.submission_date) : null;
 
-      // Update monthly data
-      if (taskStartDate) {
-        const monthName = taskStartDate.toLocaleString("default", { month: "short" });
-        if (monthlyData[monthName]) {
-          if (status === "completed") {
-            monthlyData[monthName].completed++;
-          } else {
-            monthlyData[monthName].pending++;
+        let status = "pending";
+        if (completionDate) {
+          status = "completed";
+        } else if (taskStartDate && isDateInPast(taskStartDate)) {
+          status = "overdue";
+        }
+
+        // Count based on status
+        if (status === "completed") {
+          completedTasks++;
+          if (dashboardType === "delegation") {
+            if (task.color_code_for === 1) completedRatingOne++;
+            else if (task.color_code_for === 2) completedRatingTwo++;
+            else if (task.color_code_for >= 3) completedRatingThreePlus++;
+          }
+        } else {
+          pendingTasks++;
+          if (status === "overdue") overdueTasks++;
+        }
+
+        totalTasks++;
+
+        // Update monthly data
+        if (taskStartDate) {
+          const monthName = taskStartDate.toLocaleString("default", { month: "short" });
+          if (monthlyData[monthName]) {
+            if (status === "completed") {
+              monthlyData[monthName].completed++;
+            } else {
+              monthlyData[monthName].pending++;
+            }
           }
         }
+
+        return {
+          id: task.task_id,
+          title: task.task_description,
+          assignedTo: task.name || "Unassigned",
+          taskStartDate: formatDateToDDMMYYYY(taskStartDate),
+          originalTaskStartDate: task.task_start_date, // Keep original for filtering
+          status,
+          frequency: task.frequency || "one-time",
+          rating: task.color_code_for || 0
+        };
+      }).filter(Boolean);
+
+      const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
+
+      const barChartData = Object.entries(monthlyData).map(([name, data]) => ({
+        name,
+        completed: data.completed,
+        pending: data.pending
+      }));
+
+      const pieChartData = [
+        { name: "Completed", value: completedTasks, color: "#22c55e" },
+        { name: "Pending", value: pendingTasks, color: "#facc15" },
+        { name: "Overdue", value: overdueTasks, color: "#ef4444" }
+      ];
+
+      const staffMap = new Map();
+
+      if (processedTasks.length > 0) {
+        processedTasks.forEach(task => {
+          const assignedTo = task.assignedTo || "Unassigned";
+          if (!staffMap.has(assignedTo)) {
+            staffMap.set(assignedTo, {
+              name: assignedTo,
+              totalTasks: 0,
+              completedTasks: 0,
+              pendingTasks: 0
+            });
+          }
+          const staff = staffMap.get(assignedTo);
+          staff.totalTasks++;
+          if (task.status === "completed") {
+            staff.completedTasks++;
+          } else {
+            staff.pendingTasks++;
+          }
+        });
       }
 
-      return {
-        id: task.task_id,
-        title: task.task_description,
-        assignedTo: task.name || "Unassigned",
-        taskStartDate: formatDateToDDMMYYYY(taskStartDate),
-        originalTaskStartDate: task.task_start_date, // Keep original for filtering
-        status,
-        frequency: task.frequency || "one-time",
-        rating: task.color_code_for || 0
-      };
-    }).filter(Boolean);
+      const staffMembers = Array.from(staffMap.values()).map(staff => ({
+        ...staff,
+        id: (staff.name || "unassigned").replace(/\s+/g, "-").toLowerCase(),
+        email: `${(staff.name || "unassigned").toLowerCase().replace(/\s+/g, ".")}@example.com`,
+        progress: staff.totalTasks > 0 ? Math.round((staff.completedTasks / staff.totalTasks) * 100) : 0
+      }));
 
-    const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
-
-    const barChartData = Object.entries(monthlyData).map(([name, data]) => ({
-      name,
-      completed: data.completed,
-      pending: data.pending
-    }));
-
-    const pieChartData = [
-      { name: "Completed", value: completedTasks, color: "#22c55e" },
-      { name: "Pending", value: pendingTasks, color: "#facc15" },
-      { name: "Overdue", value: overdueTasks, color: "#ef4444" }
-    ];
-
-    const staffMap = new Map();
-    
-    if (processedTasks.length > 0) {
-      processedTasks.forEach(task => {
-        const assignedTo = task.assignedTo || "Unassigned";
-        if (!staffMap.has(assignedTo)) {
-          staffMap.set(assignedTo, {
-            name: assignedTo,
-            totalTasks: 0,
-            completedTasks: 0,
-            pendingTasks: 0
-          });
-        }
-        const staff = staffMap.get(assignedTo);
-        staff.totalTasks++;
-        if (task.status === "completed") {
-          staff.completedTasks++;
-        } else {
-          staff.pendingTasks++;
-        }
+      setDepartmentData({
+        allTasks: processedTasks,
+        staffMembers,
+        totalTasks,
+        completedTasks,
+        pendingTasks,
+        overdueTasks,
+        completionRate,
+        barChartData,
+        pieChartData,
+        completedRatingOne,
+        completedRatingTwo,
+        completedRatingThreePlus
       });
+
+    } catch (error) {
+      console.error(`Error fetching ${dashboardType} data:`, error);
     }
+  };
 
-    const staffMembers = Array.from(staffMap.values()).map(staff => ({
-      ...staff,
-      id: (staff.name || "unassigned").replace(/\s+/g, "-").toLowerCase(),
-      email: `${(staff.name || "unassigned").toLowerCase().replace(/\s+/g, ".")}@example.com`,
-      progress: staff.totalTasks > 0 ? Math.round((staff.completedTasks / staff.totalTasks) * 100) : 0
+  // 2. Also update the Redux dispatch calls to pass the staff filter:
+  // Replace the useEffect with:
+
+  // Replace your existing useEffect with this updated version:
+
+  useEffect(() => {
+    // Fetch detailed data for charts and tables
+    fetchDepartmentData();
+
+    // Update Redux state counts with staff filter
+    dispatch(totalTaskInTable({
+      dashboardType,
+      staffFilter: dashboardStaffFilter
     }));
+    dispatch(completeTaskInTable({
+      dashboardType,
+      staffFilter: dashboardStaffFilter
+    }));
+    dispatch(pendingTaskInTable({
+      dashboardType,
+      staffFilter: dashboardStaffFilter
+    }));
+    dispatch(overdueTaskInTable({
+      dashboardType,
+      staffFilter: dashboardStaffFilter
+    }));
+  }, [dashboardType, dashboardStaffFilter]);
 
-    setDepartmentData({
-      allTasks: processedTasks,
-      staffMembers,
-      totalTasks,
-      completedTasks,
-      pendingTasks,
-      overdueTasks,
-      completionRate,
-      barChartData,
-      pieChartData,
-      completedRatingOne,
-      completedRatingTwo,
-      completedRatingThreePlus
-    });
+  // 3. Make sure your Redux API functions also handle the staff filter:
+  // You'll need to update your Redux slice and API functions to accept and use the staff filter parameter
 
-  } catch (error) {
-    console.error(`Error fetching ${dashboardType} data:`, error);
-  }
-};
-
-// 2. Also update the Redux dispatch calls to pass the staff filter:
-// Replace the useEffect with:
-
-// Replace your existing useEffect with this updated version:
-
-useEffect(() => {
-  // Fetch detailed data for charts and tables
-  fetchDepartmentData();
-  
-  // Update Redux state counts with staff filter
-  dispatch(totalTaskInTable({ 
-    dashboardType, 
-    staffFilter: dashboardStaffFilter 
-  }));
-  dispatch(completeTaskInTable({ 
-    dashboardType, 
-    staffFilter: dashboardStaffFilter 
-  }));
-  dispatch(pendingTaskInTable({ 
-    dashboardType, 
-    staffFilter: dashboardStaffFilter 
-  }));
-  dispatch(overdueTaskInTable({ 
-    dashboardType, 
-    staffFilter: dashboardStaffFilter 
-  }));
-}, [dashboardType, dashboardStaffFilter]);
-
-// 3. Make sure your Redux API functions also handle the staff filter:
-// You'll need to update your Redux slice and API functions to accept and use the staff filter parameter
-
-// The key changes:
-// 1. Apply dashboardStaffFilter BEFORE other filtering
-// 2. Move staff filtering to the top of the function
-// 3. Remove the redundant staff filtering that was happening after processing
-// 4. Make sure the filtered data is used for all calculations
+  // The key changes:
+  // 1. Apply dashboardStaffFilter BEFORE other filtering
+  // 2. Move staff filtering to the top of the function
+  // 3. Remove the redundant staff filtering that was happening after processing
+  // 4. Make sure the filtered data is used for all calculations
 
   // Filter tasks based on criteria
   const filteredTasks = departmentData.allTasks.filter((task) => {
@@ -456,9 +456,9 @@ useEffect(() => {
   });
 
   // Reset dashboard staff filter when dashboard type changes
-useEffect(() => {
-  setDashboardStaffFilter("all");
-}, [dashboardType]);
+  useEffect(() => {
+    setDashboardStaffFilter("all");
+  }, [dashboardType]);
 
   // Get tasks by view
   const getTasksByView = (view) => {
@@ -470,7 +470,7 @@ useEffect(() => {
         case "recent":
           return isDateToday(taskDate);
         case "upcoming":
-          return dashboardType === "delegation" 
+          return dashboardType === "delegation"
             ? isDateFuture(taskDate)
             : isDateTomorrow(task.originalTaskStartDate);
         case "overdue":
@@ -562,7 +562,7 @@ useEffect(() => {
         const taskDate = parseTaskStartDate(task.originalTaskStartDate);
         return task.assignedTo === staff.name && taskDate && taskDate <= today;
       });
-      
+
       const completedTasks = staffTasks.filter(task => task.status === 'completed').length;
       const totalTasks = staffTasks.length;
       const pendingTasks = totalTasks - completedTasks;
@@ -649,130 +649,118 @@ useEffect(() => {
     <AdminLayout>
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <h1 className="text-2xl font-bold tracking-tight text-purple-500">Dashboard </h1>
-          <div className="flex items-center gap-2">
-  {/* Dashboard Type Selection */}
-  <select
-    value={dashboardType}
-    onChange={(e) => setDashboardType(e.target.value)}
-    className="w-[140px] rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-  >
-    <option value="checklist">Checklist</option>
-    <option value="delegation">Delegation</option>
-  </select>
-  
-  {/* Dashboard Staff Filter */}
-  <select
-    value={dashboardStaffFilter}
-    onChange={(e) => setDashboardStaffFilter(e.target.value)}
-    className="w-[180px] rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-  >
-    <option value="all">All Staff Members</option>
-    {availableStaff.map((staffName) => (
-      <option key={staffName} value={staffName}>
-        {staffName}
-      </option>
-    ))}
-  </select>
-</div>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Dashboard</h1>
+
         </div>
 
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Tasks</p>
+                <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalTask}</h3>
+              </div>
+              <div className="p-2 bg-blue-50 rounded-lg text-blue-600 border border-blue-100">
+                <ListTodo className="h-5 w-5" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4 px-2 py-1 bg-gray-50 rounded inline-block">
+              {dashboardType === "delegation"
+                ? "Delegation tasks"
+                : "Checklist tasks"
+              }
+              {dashboardStaffFilter !== "all" && ` • ${dashboardStaffFilter}`}
+            </p>
+          </div>
 
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">
+                  {dashboardType === "delegation" ? "Completed Once" : "Completed"}
+                </p>
+                <h3 className="text-2xl font-bold text-gray-900 mt-1">{completeTask}</h3>
+              </div>
+              <div className="p-2 bg-green-50 rounded-lg text-green-600 border border-green-100">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4 px-2 py-1 bg-gray-50 rounded inline-block">
+              {dashboardType === "delegation" ? "Tasks done 1x" : "Completed tasks"}
+              {dashboardStaffFilter !== "all" && ` • ${dashboardStaffFilter}`}
+            </p>
+          </div>
 
-<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-  <div className="rounded-lg border border-l-4 border-l-blue-500 shadow-md hover:shadow-lg transition-all bg-white">
-    <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-tr-lg p-4">
-      <h3 className="text-sm font-medium text-blue-700">Total Tasks</h3>
-      <ListTodo className="h-4 w-4 text-blue-500" />
-    </div>
-    <div className="p-4">
-      <div className="text-3xl font-bold text-blue-700">{totalTask}</div>
-      <p className="text-xs text-blue-600">
-        {dashboardType === "delegation"
-          ? "All tasks in delegation sheet"
-          : "Total tasks in checklist (up to today)"
-        }
-        {dashboardStaffFilter !== "all" && ` for ${dashboardStaffFilter}`}
-      </p>
-    </div>
-  </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">
+                  {dashboardType === "delegation" ? "Completed Twice" : "Pending"}
+                </p>
+                <h3 className="text-2xl font-bold text-gray-900 mt-1">{pendingTask}</h3>
+              </div>
+              <div className="p-2 bg-amber-50 rounded-lg text-amber-600 border border-amber-100">
+                {dashboardType === "delegation" ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : (
+                  <Clock className="h-5 w-5" />
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4 px-2 py-1 bg-gray-50 rounded inline-block">
+              {dashboardType === "delegation" ? "Tasks done 2x" : "Pending & Due"}
+              {dashboardStaffFilter !== "all" && ` • ${dashboardStaffFilter}`}
+            </p>
+          </div>
 
-  <div className="rounded-lg border border-l-4 border-l-green-500 shadow-md hover:shadow-lg transition-all bg-white">
-    <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-green-50 to-green-100 rounded-tr-lg p-4">
-      <h3 className="text-sm font-medium text-green-700">
-        {dashboardType === "delegation" ? "Completed Once" : "Completed Tasks"}
-      </h3>
-      <CheckCircle2 className="h-4 w-4 text-green-500" />
-    </div>
-    <div className="p-4">
-      <div className="text-3xl font-bold text-green-700">{completeTask}</div>
-      <p className="text-xs text-green-600">
-        {dashboardType === "delegation" ? "Tasks completed once" : "Total completed till date"}
-        {dashboardStaffFilter !== "all" && ` for ${dashboardStaffFilter}`}
-      </p>
-    </div>
-  </div>
-
-  <div className="rounded-lg border border-l-4 border-l-amber-500 shadow-md hover:shadow-lg transition-all bg-white">
-    <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-amber-50 to-amber-100 rounded-tr-lg p-4">
-      <h3 className="text-sm font-medium text-amber-700">
-        {dashboardType === "delegation" ? "Completed Twice" : "Pending Tasks"}
-      </h3>
-      {dashboardType === "delegation" ? (
-        <CheckCircle2 className="h-4 w-4 text-amber-500" />
-      ) : (
-        <Clock className="h-4 w-4 text-amber-500" />
-      )}
-    </div>
-    <div className="p-4">
-      <div className="text-3xl font-bold text-amber-700">{pendingTask}</div>
-      <p className="text-xs text-amber-600">
-        {dashboardType === "delegation" ? "Tasks completed twice" : "Including today + overdue"}
-        {dashboardStaffFilter !== "all" && ` for ${dashboardStaffFilter}`}
-      </p>
-    </div>
-  </div>
-
-  <div className="rounded-lg border border-l-4 border-l-red-500 shadow-md hover:shadow-lg transition-all bg-white">
-    <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-red-50 to-red-100 rounded-tr-lg p-4">
-      <h3 className="text-sm font-medium text-red-700">
-        {dashboardType === "delegation" ? "Completed 3+ Times" : "Overdue Tasks"}
-      </h3>
-      {dashboardType === "delegation" ? (
-        <CheckCircle2 className="h-4 w-4 text-red-500" />
-      ) : (
-        <AlertTriangle className="h-4 w-4 text-red-500" />
-      )}
-    </div>
-    <div className="p-4">
-      <div className="text-3xl font-bold text-red-700">{overdueTask}</div>
-      <p className="text-xs text-red-600">
-        {dashboardType === "delegation" ? "Tasks completed 3+ times" : "Past due (excluding today)"}
-        {dashboardStaffFilter !== "all" && ` for ${dashboardStaffFilter}`}
-      </p>
-    </div>
-  </div>
-</div>
+          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">
+                  {dashboardType === "delegation" ? "Completed 3+" : "Overdue"}
+                </p>
+                <h3 className="text-2xl font-bold text-red-600 mt-1">{overdueTask}</h3>
+              </div>
+              <div className="p-2 bg-red-50 rounded-lg text-red-600 border border-red-100">
+                {dashboardType === "delegation" ? (
+                  <CheckCircle2 className="h-5 w-5" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5" />
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 mt-4 px-2 py-1 bg-gray-50 rounded inline-block">
+              {dashboardType === "delegation" ? "Tasks done 3x+" : "Past due tasks"}
+              {dashboardStaffFilter !== "all" && ` • ${dashboardStaffFilter}`}
+            </p>
+          </div>
+        </div>
 
         {/* Task Navigation Tabs */}
-        <div className="w-full overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <div className="grid grid-cols-3">
+        <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+          <div className="grid grid-cols-3 border-b border-gray-100">
             <button
-              className={`py-3 text-center font-medium transition-colors ${taskView === "recent" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              className={`py-4 text-center font-medium transition-all text-sm ${taskView === "recent"
+                ? "text-red-600 border-b-2 border-red-600 bg-red-50/50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               onClick={() => setTaskView("recent")}
             >
               {dashboardType === "delegation" ? "Today Tasks" : "Recent Tasks"}
             </button>
             <button
-              className={`py-3 text-center font-medium transition-colors ${taskView === "upcoming" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              className={`py-4 text-center font-medium transition-all text-sm ${taskView === "upcoming"
+                ? "text-red-600 border-b-2 border-red-600 bg-red-50/50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               onClick={() => setTaskView("upcoming")}
             >
               {dashboardType === "delegation" ? "Future Tasks" : "Upcoming Tasks"}
             </button>
             <button
-              className={`py-3 text-center font-medium transition-colors ${taskView === "overdue" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              className={`py-4 text-center font-medium transition-all text-sm ${taskView === "overdue"
+                ? "text-red-600 border-b-2 border-red-600 bg-red-50/50"
+                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                 }`}
               onClick={() => setTaskView("overdue")}
             >
@@ -780,11 +768,11 @@ useEffect(() => {
             </button>
           </div>
 
-          <div className="p-4">
-            <div className="flex flex-col gap-4 md:flex-row mb-4">
+          <div className="p-6">
+            <div className="flex flex-col gap-4 md:flex-row mb-6">
               <div className="flex-1 space-y-2">
-                <label htmlFor="search" className="flex items-center text-purple-700">
-                  <Filter className="h-4 w-4 mr-2" />
+                <label htmlFor="search" className="flex items-center text-gray-700 text-sm font-medium">
+                  <Filter className="h-4 w-4 mr-2 text-gray-400" />
                   Search Tasks
                 </label>
                 <input
@@ -792,19 +780,19 @@ useEffect(() => {
                   placeholder="Search by task title or ID"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  className="w-full rounded-lg border border-gray-200 p-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all"
                 />
               </div>
-              <div className="space-y-2 md:w-[180px]">
-                <label htmlFor="staff-filter" className="flex items-center text-purple-700">
-                  <Filter className="h-4 w-4 mr-2" />
+              <div className="space-y-2 md:w-[200px]">
+                <label htmlFor="staff-filter" className="flex items-center text-gray-700 text-sm font-medium">
+                  <Filter className="h-4 w-4 mr-2 text-gray-400" />
                   Filter by Staff
                 </label>
                 <select
                   id="staff-filter"
                   value={filterStaff}
                   onChange={(e) => setFilterStaff(e.target.value)}
-                  className="w-full rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  className="w-full rounded-lg border border-gray-200 p-2.5 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-all bg-white"
                 >
                   <option value="all">All Staff</option>
                   {Array.from(new Set(departmentData.allTasks.map(task => task.assignedTo)))
@@ -819,73 +807,82 @@ useEffect(() => {
             </div>
 
             {getTasksByView(taskView).length === 0 ? (
-              <div className="text-center p-8 text-gray-500">
-                <p>No tasks found matching your filters.</p>
+              <div className="text-center p-12 bg-gray-50 rounded-lg border border-dashed border-gray-200">
+                <p className="text-gray-500">No tasks found matching your filters.</p>
               </div>
             ) : (
-              <div className="overflow-x-auto" style={{ maxHeight: "400px", overflowY: "auto" }}>
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 sticky top-0 z-10">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Task ID
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Task Description
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Assigned To
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Task Start Date
-                      </th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Frequency
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {getTasksByView(taskView).map((task) => (
-                      <tr key={task.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{task.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.title}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.assignedTo}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{task.taskStartDate}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getFrequencyColor(task.frequency)}`}
-                          >
-                            {task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1)}
-                          </span>
-                        </td>
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <div className="overflow-x-auto" style={{ maxHeight: "400px", overflowY: "auto" }}>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50 sticky top-0 z-10">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Task ID
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Task Description
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Assigned To
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Task Start Date
+                        </th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                          Frequency
+                        </th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {getTasksByView(taskView).map((task) => (
+                        <tr key={task.id} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{task.id}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{task.title}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              {task.assignedTo}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{task.taskStartDate}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-xs font-medium ${getFrequencyColor(task.frequency)}`}
+                            >
+                              {task.frequency.charAt(0).toUpperCase() + task.frequency.slice(1)}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-1">
-          <div className="rounded-lg border border-l-4 border-l-indigo-500 shadow-md hover:shadow-lg transition-all bg-white">
-            <div className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gradient-to-r from-indigo-50 to-indigo-100 rounded-tr-lg p-4">
-              <h3 className="text-sm font-medium text-indigo-700">Task Completion Rate</h3>
-              <BarChart3 className="h-4 w-4 text-indigo-500" />
+          <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
+            <div className="flex flex-row items-center justify-between mb-6">
+              <h3 className="text-lg font-semibold text-gray-900">Task Completion Rate</h3>
             </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="text-3xl font-bold text-indigo-700">{departmentData.completionRate}%</div>
-                <div className="flex items-center space-x-2">
-                  <span className="inline-block w-3 h-3 bg-green-500 rounded-full"></span>
-                  <span className="text-xs text-gray-600">Completed: {departmentData.completedTasks}</span>
-                  <span className="inline-block w-3 h-3 bg-amber-500 rounded-full"></span>
-                  <span className="text-xs text-gray-600">Total: {departmentData.totalTasks}</span>
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-3xl font-bold text-gray-900">{departmentData.completionRate}%</div>
+                <div className="flex items-center space-x-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                    <span className="text-gray-600">Completed: {departmentData.completedTasks}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 bg-gray-300 rounded-full"></span>
+                    <span className="text-gray-600">Total: {departmentData.totalTasks}</span>
+                  </div>
                 </div>
               </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full mt-2">
+              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-green-500 to-amber-500 rounded-full"
+                  className="h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-500"
                   style={{ width: `${departmentData.completionRate}%` }}
                 ></div>
               </div>
@@ -894,59 +891,67 @@ useEffect(() => {
         </div>
 
         {/* Tabs */}
-        <div className="space-y-4">
-          <div className="bg-purple-100 rounded-md p-1 flex space-x-1">
-            <button
-              onClick={() => setActiveTab("overview")}
-              className={`flex-1 py-2 text-center rounded-md transition-colors ${activeTab === "overview" ? "bg-purple-600 text-white" : "text-purple-700 hover:bg-purple-200"
-                }`}
-            >
-              Overview
-            </button>
-            <button
-              onClick={() => setActiveTab("mis")}
-              className={`flex-1 py-2 text-center rounded-md transition-colors ${activeTab === "mis" ? "bg-purple-600 text-white" : "text-purple-700 hover:bg-purple-200"
-                }`}
-            >
-              MIS Report
-            </button>
-            <button
-              onClick={() => setActiveTab("staff")}
-              className={`flex-1 py-2 text-center rounded-md transition-colors ${activeTab === "staff" ? "bg-purple-600 text-white" : "text-purple-700 hover:bg-purple-200"
-                }`}
-            >
-              Staff Performance
-            </button>
+        <div className="space-y-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "overview"
+                  ? "border-red-500 text-red-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                Overview
+              </button>
+              <button
+                onClick={() => setActiveTab("mis")}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "mis"
+                  ? "border-red-500 text-red-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                MIS Report
+              </button>
+              <button
+                onClick={() => setActiveTab("staff")}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === "staff"
+                  ? "border-red-500 text-red-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+              >
+                Staff Performance
+              </button>
+            </nav>
           </div>
 
           {activeTab === "overview" && (
-            <div className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <div className="lg:col-span-4 rounded-lg border border-purple-200 shadow-md bg-white">
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                    <h3 className="text-purple-700 font-medium">Tasks Overview</h3>
-                    <p className="text-purple-600 text-sm">Task completion rate over time</p>
+            <div className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+                <div className="lg:col-span-4 rounded-xl border border-gray-200 shadow-sm bg-white p-6">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900">Tasks Overview</h3>
+                    <p className="text-gray-500 text-sm">Task completion rate over time</p>
                   </div>
-                  <div className="p-4 pl-2">
+                  <div className="pl-0">
                     <TasksOverviewChart />
                   </div>
                 </div>
-                <div className="lg:col-span-3 rounded-lg border border-purple-200 shadow-md bg-white">
-                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                    <h3 className="text-purple-700 font-medium">Task Status</h3>
-                    <p className="text-purple-600 text-sm">Distribution of tasks by status</p>
+                <div className="lg:col-span-3 rounded-xl border border-gray-200 shadow-sm bg-white p-6">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900">Task Status</h3>
+                    <p className="text-gray-500 text-sm">Distribution of tasks by status</p>
                   </div>
-                  <div className="p-4">
+                  <div>
                     <TasksCompletionChart />
                   </div>
                 </div>
               </div>
-              <div className="rounded-lg border border-purple-200 shadow-md bg-white">
-                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                  <h3 className="text-purple-700 font-medium">Staff Task Summary</h3>
-                  <p className="text-purple-600 text-sm">Overview of tasks assigned to each staff member</p>
+              <div className="rounded-xl border border-gray-200 shadow-sm bg-white p-6">
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900">Staff Task Summary</h3>
+                  <p className="text-gray-500 text-sm">Overview of tasks assigned to each staff member</p>
                 </div>
-                <div className="p-4">
+                <div>
                   <StaffTasksTable />
                 </div>
               </div>
@@ -954,22 +959,22 @@ useEffect(() => {
           )}
 
           {activeTab === "mis" && (
-            <div className="rounded-lg border border-purple-200 shadow-md bg-white">
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                <h3 className="text-purple-700 font-medium">MIS Report</h3>
-                <p className="text-purple-600 text-sm">
-                  {dashboardType === "delegation" 
+            <div className="rounded-xl border border-gray-200 shadow-sm bg-white p-6">
+              <div className="mb-6 pb-6 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">MIS Report</h3>
+                <p className="text-gray-500 text-sm mt-1">
+                  {dashboardType === "delegation"
                     ? "Detailed delegation analytics - all tasks from sheet data"
                     : "Detailed task analytics and performance metrics"
                   }
                 </p>
               </div>
-              <div className="p-4">
+              <div>
                 <div className="space-y-8">
                   {dashboardType !== "delegation" && (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 bg-gray-50 p-5 rounded-xl border border-gray-200">
                       <div className="space-y-2 lg:col-span-1">
-                        <label htmlFor="start-date" className="flex items-center text-purple-700 text-sm font-medium">
+                        <label htmlFor="start-date" className="flex items-center text-gray-700 text-sm font-medium">
                           Start Date
                         </label>
                         <input
@@ -977,11 +982,11 @@ useEffect(() => {
                           type="date"
                           value={dateRange.startDate}
                           onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                          className="w-full rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                          className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white"
                         />
                       </div>
                       <div className="space-y-2 lg:col-span-1">
-                        <label htmlFor="end-date" className="flex items-center text-purple-700 text-sm font-medium">
+                        <label htmlFor="end-date" className="flex items-center text-gray-700 text-sm font-medium">
                           End Date
                         </label>
                         <input
@@ -989,13 +994,13 @@ useEffect(() => {
                           type="date"
                           value={dateRange.endDate}
                           onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                          className="w-full rounded-md border border-purple-200 p-2 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                          className="w-full rounded-lg border border-gray-200 p-2 text-sm focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 bg-white"
                         />
                       </div>
                       <div className="space-y-2 lg:col-span-2 flex items-end">
                         <button
                           onClick={filterTasksByDateRange}
-                          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition-colors"
+                          className="w-full bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg transition-colors font-medium text-sm"
                         >
                           Apply Filter
                         </button>
@@ -1004,132 +1009,99 @@ useEffect(() => {
                   )}
 
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-purple-600">Total Tasks Assigned</div>
-                      <div className="text-3xl font-bold text-purple-700">
-                        {dashboardType === "delegation" 
-                          ? departmentData.totalTasks 
+                    <div className="space-y-2 p-4 rounded-lg bg-gray-50 border border-gray-100">
+                      <div className="text-sm font-medium text-gray-500">Total Tasks Assigned</div>
+                      <div className="text-3xl font-bold text-gray-900">
+                        {dashboardType === "delegation"
+                          ? departmentData.totalTasks
                           : (dateRange.filtered ? filteredDateStats.totalTasks : departmentData.totalTasks)
                         }
                       </div>
                       {dashboardType === "delegation" ? (
-                        <p className="text-xs text-purple-600">All tasks from delegation sheet</p>
+                        <p className="text-xs text-gray-500">All tasks from delegation sheet</p>
                       ) : (
                         dateRange.filtered && (
-                          <p className="text-xs text-purple-600">
+                          <p className="text-xs text-gray-500">
                             For period: {formatLocalDate(dateRange.startDate)} - {formatLocalDate(dateRange.endDate)}
                           </p>
                         )
                       )}
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-purple-600">Tasks Completed</div>
-                      <div className="text-3xl font-bold text-purple-700">
-                        {dashboardType === "delegation" 
-                          ? departmentData.completedTasks 
+                    <div className="space-y-2 p-4 rounded-lg bg-green-50/50 border border-green-100">
+                      <div className="text-sm font-medium text-green-700">Tasks Completed</div>
+                      <div className="text-3xl font-bold text-green-700">
+                        {dashboardType === "delegation"
+                          ? departmentData.completedTasks
                           : (dateRange.filtered ? filteredDateStats.completedTasks : departmentData.completedTasks)
                         }
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium text-purple-600">
-                        {dashboardType === "delegation" ? "Tasks Pending" : "Tasks Pending/Overdue"}
+                    <div className="space-y-2 p-4 rounded-lg bg-red-50/50 border border-red-100">
+                      <div className="text-sm font-medium text-red-700">
+                        {dashboardType === "delegation" ? "Tasks Pending" : "Pending / Overdue"}
                       </div>
-                      <div className="text-3xl font-bold text-purple-700">
-                        {dashboardType === "delegation" 
-                          ? departmentData.pendingTasks 
-                          : (dateRange.filtered 
-                              ? `${filteredDateStats.pendingTasks} / ${filteredDateStats.overdueTasks}` 
-                              : `${departmentData.pendingTasks} / ${departmentData.overdueTasks}`
-                            )
-                        }
-                      </div>
-                      <div className="text-xs text-purple-600">
-                        {dashboardType === "delegation" 
-                          ? "All incomplete tasks" 
-                          : "Pending (all incomplete) / Overdue (past dates only)"
+                      <div className="text-3xl font-bold text-red-700">
+                        {dashboardType === "delegation"
+                          ? departmentData.pendingTasks
+                          : (dateRange.filtered
+                            ? `${filteredDateStats.pendingTasks} / ${filteredDateStats.overdueTasks}`
+                            : `${departmentData.pendingTasks} / ${departmentData.overdueTasks}`
+                          )
                         }
                       </div>
                     </div>
                   </div>
 
                   {dashboardType !== "delegation" && dateRange.filtered && (
-                    <div className="rounded-lg border border-purple-100 p-4 bg-gray-50">
-                      <h4 className="text-lg font-medium text-purple-700 mb-4">Detailed Date Range Breakdown</h4>
+                    <div className="rounded-xl border border-gray-200 p-6 bg-gray-50/50">
+                      <h4 className="text-base font-semibold text-gray-900 mb-4">Detailed Breakdown</h4>
                       <div className="grid gap-4 md:grid-cols-3">
-                        <div className="bg-white p-3 rounded-lg border border-amber-200">
-                          <div className="text-sm font-medium text-amber-700">Pending Tasks</div>
+                        <div className="bg-white p-4 rounded-xl border border-amber-100 shadow-sm">
+                          <div className="text-sm font-medium text-amber-700 mb-1">Pending</div>
                           <div className="text-2xl font-bold text-amber-600">{filteredDateStats.pendingTasks}</div>
-                          <div className="text-xs text-amber-600 mt-1">All incomplete tasks (including overdue + today)</div>
+                          <div className="text-xs text-gray-400 mt-2">All incomplete tasks</div>
                         </div>
-                        <div className="bg-white p-3 rounded-lg border border-red-200">
-                          <div className="text-sm font-medium text-red-700">Overdue Tasks</div>
+                        <div className="bg-white p-4 rounded-xl border border-red-100 shadow-sm">
+                          <div className="text-sm font-medium text-red-700 mb-1">Overdue</div>
                           <div className="text-2xl font-bold text-red-600">{filteredDateStats.overdueTasks}</div>
-                          <div className="text-xs text-red-600 mt-1">Past due dates only (excluding today)</div>
+                          <div className="text-xs text-gray-400 mt-2">Past due dates</div>
                         </div>
-                        <div className="bg-white p-3 rounded-lg border border-green-200">
-                          <div className="text-sm font-medium text-green-700">Completed Once</div>
+                        <div className="bg-white p-4 rounded-xl border border-green-100 shadow-sm">
+                          <div className="text-sm font-medium text-green-700 mb-1">Completed Once</div>
                           <div className="text-2xl font-bold text-green-600">{departmentData.completedRatingOne}</div>
-                          <div className="text-xs text-green-600 mt-1">Tasks with rating 1</div>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-amber-200">
-                          <div className="text-sm font-medium text-amber-700">Completed Twice</div>
-                          <div className="text-2xl font-bold text-amber-600">{departmentData.completedRatingTwo}</div>
-                          <div className="text-xs text-amber-600 mt-1">Tasks with rating 2</div>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-red-200">
-                          <div className="text-sm font-medium text-red-700">Completed 3+ Times</div>
-                          <div className="text-2xl font-bold text-red-600">{departmentData.completedRatingThreePlus}</div>
-                          <div className="text-xs text-red-600 mt-1">Tasks with rating 3 or higher</div>
                         </div>
                       </div>
                     </div>
                   )}
 
                   <div className="space-y-4">
-                    <h3 className="text-lg font-medium text-purple-700">Department Performance</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Performance Summary</h3>
                     <div className="grid gap-4 md:grid-cols-1">
-                      <div className="rounded-lg border border-purple-200 bg-white p-4">
-                        <h4 className="text-sm font-medium text-purple-700 mb-2">Completion Rate</h4>
-                        <div className="flex items-center gap-4">
-                          <div className="text-2xl font-bold text-purple-700">
-                            {dashboardType === "delegation" 
-                              ? departmentData.completionRate 
+                      <div className="rounded-xl border border-gray-200 bg-white p-6">
+                        <h4 className="text-sm font-medium text-gray-500 mb-3">Overall Completion Rate</h4>
+                        <div className="flex items-center gap-6">
+                          <div className="text-4xl font-bold text-gray-900">
+                            {dashboardType === "delegation"
+                              ? departmentData.completionRate
                               : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
                             }%
                           </div>
                           <div className="flex-1">
-                            <div className="w-full h-6 bg-gray-200 rounded-full">
+                            <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden">
                               <div
-                                className="h-full rounded-full flex items-center justify-end px-3 text-xs font-medium text-white"
+                                className="h-full rounded-full transition-all duration-500"
                                 style={{
-                                  width: `${dashboardType === "delegation" 
-                                    ? departmentData.completionRate 
+                                  width: `${dashboardType === "delegation"
+                                    ? departmentData.completionRate
                                     : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
-                                  }%`,
-                                  background: `linear-gradient(to right, #10b981 ${(dashboardType === "delegation" 
-                                    ? departmentData.completionRate 
-                                    : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
-                                  ) * 0.8}%, #f59e0b ${(dashboardType === "delegation" 
-                                    ? departmentData.completionRate 
-                                    : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
-                                  ) * 0.8}%)`
+                                    }%`,
+                                  background: `linear-gradient(to right, #22c55e, #16a34a)`
                                 }}
                               >
-                                {dashboardType === "delegation" 
-                                  ? departmentData.completionRate 
-                                  : (dateRange.filtered ? filteredDateStats.completionRate : departmentData.completionRate)
-                                }%
                               </div>
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-purple-600 mt-2">
-                          {dashboardType === "delegation" ?
-                            `${departmentData.completedTasks} of ${departmentData.totalTasks} tasks completed in delegation mode (all sheet data)` :
-                            `${dateRange.filtered ? filteredDateStats.completedTasks : departmentData.completedTasks} of ${dateRange.filtered ? filteredDateStats.totalTasks : departmentData.totalTasks} tasks completed in checklist mode`
-                          }
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -1139,203 +1111,116 @@ useEffect(() => {
           )}
 
           {activeTab === "staff" && (
-            <div className="rounded-lg border border-purple-200 shadow-md bg-white">
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100 p-4">
-                <h3 className="text-purple-700 font-medium">Staff Performance</h3>
-                <p className="text-purple-600 text-sm">
-                  {dashboardType === "delegation" 
-                    ? "Task completion rates by staff member (all delegation sheet data)"
-                    : "Task completion rates by staff member (tasks up to today only)"
+            <div className="rounded-xl border border-gray-200 shadow-sm bg-white p-6">
+              <div className="mb-6 pb-6 border-b border-gray-100">
+                <h3 className="text-lg font-semibold text-gray-900">Staff Performance</h3>
+                <p className="text-gray-500 text-sm mt-1">
+                  {dashboardType === "delegation"
+                    ? "Task completion rates by staff member"
+                    : "Task completion rates (tasks up to today)"
                   }
                 </p>
               </div>
-              <div className="p-4">
+              <div>
                 <div className="space-y-8">
                   {departmentData.staffMembers.length > 0 ? (
                     <>
                       {(() => {
-                        // Sort staff members by performance (high to low)
                         const sortedStaffMembers = [...departmentData.staffMembers]
                           .filter(staff => staff.totalTasks > 0)
                           .sort((a, b) => b.progress - a.progress);
 
                         return (
-                          <>
-                            {/* High performers section (70% or above) */}
-                            <div className="rounded-md border border-green-200">
-                              <div className="p-4 bg-gradient-to-r from-green-50 to-green-100 border-b border-green-200">
-                                <h3 className="text-lg font-medium text-green-700">Top Performers</h3>
-                                <p className="text-sm text-green-600">
-                                  {dashboardType === "delegation" 
-                                    ? "Staff with high task completion rates (all delegation data)"
-                                    : "Staff with high task completion rates (tasks up to today only)"
-                                  }
-                                </p>
-                              </div>
-                              <div className="p-4">
-                                <div className="space-y-4">
-                                  {sortedStaffMembers
-                                    .filter(staff => staff.progress >= 70)
-                                    .map((staff) => (
-                                      <div
-                                        key={staff.id}
-                                        className="flex items-center justify-between p-3 border border-green-100 rounded-md bg-green-50"
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-500 to-teal-500 flex items-center justify-center">
-                                            <span className="text-sm font-medium text-white">{staff.name.charAt(0)}</span>
-                                          </div>
-                                          <div>
-                                            <p className="font-medium text-green-700">{staff.name}</p>
-                                            <p className="text-xs text-green-600">{staff.completedTasks} of {staff.totalTasks} tasks completed</p>
-                                          </div>
-                                        </div>
-                                        <div className="text-lg font-bold text-green-600">{staff.progress}%</div>
+                          <div className="grid gap-6">
+                            {/* High performers section */}
+                            <div>
+                              <h3 className="text-sm font-semibold text-green-700 mb-3 flex items-center">
+                                <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                                Top Performers (70%+)
+                              </h3>
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {sortedStaffMembers
+                                  .filter(staff => staff.progress >= 70)
+                                  .map((staff) => (
+                                    <div key={staff.id} className="p-4 rounded-lg border border-green-100 bg-green-50/30">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="font-medium text-green-900">{staff.name}</div>
+                                        <div className="text-lg font-bold text-green-700">{staff.progress}%</div>
                                       </div>
-                                    ))
-                                  }
-                                  {sortedStaffMembers.filter(staff => staff.progress >= 70).length === 0 && (
-                                    <div className="text-center p-4 text-gray-500">
-                                      <p>No staff members with high completion rates found.</p>
+                                      <div className="text-xs text-green-600">{staff.completedTasks}/{staff.totalTasks} completed</div>
+                                      <div className="w-full h-1.5 bg-green-100 rounded-full mt-2">
+                                        <div className="h-full bg-green-500 rounded-full" style={{ width: `${staff.progress}%` }}></div>
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
+                                  ))
+                                }
+                                {sortedStaffMembers.filter(staff => staff.progress >= 70).length === 0 && (
+                                  <div className="text-sm text-gray-400 italic col-span-full">No top performers yet.</div>
+                                )}
                               </div>
                             </div>
 
-                            {/* Mid performers section (40-69%) */}
-                            <div className="rounded-md border border-yellow-200">
-                              <div className="p-4 bg-gradient-to-r from-yellow-50 to-yellow-100 border-b border-yellow-200">
-                                <h3 className="text-lg font-medium text-yellow-700">Average Performers</h3>
-                                <p className="text-sm text-yellow-600">
-                                  {dashboardType === "delegation" 
-                                    ? "Staff with moderate task completion rates (all delegation data)"
-                                    : "Staff with moderate task completion rates (tasks up to today only)"
-                                  }
-                                </p>
-                              </div>
-                              <div className="p-4">
-                                <div className="space-y-4">
-                                  {sortedStaffMembers
-                                    .filter(staff => staff.progress >= 40 && staff.progress < 70)
-                                    .map((staff) => (
-                                      <div
-                                        key={staff.id}
-                                        className="flex items-center justify-between p-3 border border-yellow-100 rounded-md bg-yellow-50"
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 flex items-center justify-center">
-                                            <span className="text-sm font-medium text-white">{staff.name.charAt(0)}</span>
-                                          </div>
-                                          <div>
-                                            <p className="font-medium text-yellow-700">{staff.name}</p>
-                                            <p className="text-xs text-yellow-600">{staff.completedTasks} of {staff.totalTasks} tasks completed</p>
-                                          </div>
-                                        </div>
-                                        <div className="text-lg font-bold text-yellow-600">{staff.progress}%</div>
+                            {/* Mid performers section */}
+                            <div>
+                              <h3 className="text-sm font-semibold text-amber-700 mb-3 flex items-center">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 mr-2"></span>
+                                Average Performers (40-69%)
+                              </h3>
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {sortedStaffMembers
+                                  .filter(staff => staff.progress >= 40 && staff.progress < 70)
+                                  .map((staff) => (
+                                    <div key={staff.id} className="p-4 rounded-lg border border-amber-100 bg-amber-50/30">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="font-medium text-amber-900">{staff.name}</div>
+                                        <div className="text-lg font-bold text-amber-700">{staff.progress}%</div>
                                       </div>
-                                    ))
-                                  }
-                                  {sortedStaffMembers.filter(staff => staff.progress >= 40 && staff.progress < 70).length === 0 && (
-                                    <div className="text-center p-4 text-gray-500">
-                                      <p>No staff members with moderate completion rates found.</p>
+                                      <div className="text-xs text-amber-600">{staff.completedTasks}/{staff.totalTasks} completed</div>
+                                      <div className="w-full h-1.5 bg-amber-100 rounded-full mt-2">
+                                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${staff.progress}%` }}></div>
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
+                                  ))
+                                }
+                                {sortedStaffMembers.filter(staff => staff.progress >= 40 && staff.progress < 70).length === 0 && (
+                                  <div className="text-sm text-gray-400 italic col-span-full">No average performers.</div>
+                                )}
                               </div>
                             </div>
 
-                            {/* Low performers section (below 40%) */}
-                            <div className="rounded-md border border-red-200">
-                              <div className="p-4 bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
-                                <h3 className="text-lg font-medium text-red-700">Needs Improvement</h3>
-                                <p className="text-sm text-red-600">
-                                  {dashboardType === "delegation" 
-                                    ? "Staff with lower task completion rates (all delegation data)"
-                                    : "Staff with lower task completion rates (tasks up to today only)"
-                                  }
-                                </p>
-                              </div>
-                              <div className="p-4">
-                                <div className="space-y-4">
-                                  {sortedStaffMembers
-                                    .filter(staff => staff.progress < 40)
-                                    .map((staff) => (
-                                      <div
-                                        key={staff.id}
-                                        className="flex items-center justify-between p-3 border border-red-100 rounded-md bg-red-50"
-                                      >
-                                        <div className="flex items-center gap-2">
-                                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center">
-                                            <span className="text-sm font-medium text-white">{staff.name.charAt(0)}</span>
-                                          </div>
-                                          <div>
-                                            <p className="font-medium text-red-700">{staff.name}</p>
-                                            <p className="text-xs text-red-600">{staff.completedTasks} of {staff.totalTasks} tasks completed</p>
-                                          </div>
-                                        </div>
-                                        <div className="text-lg font-bold text-red-600">{staff.progress}%</div>
+                            {/* Low performers section */}
+                            <div>
+                              <h3 className="text-sm font-semibold text-red-700 mb-3 flex items-center">
+                                <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+                                Needs Improvement (&lt;40%)
+                              </h3>
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                {sortedStaffMembers
+                                  .filter(staff => staff.progress < 40)
+                                  .map((staff) => (
+                                    <div key={staff.id} className="p-4 rounded-lg border border-red-100 bg-red-50/30">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <div className="font-medium text-red-900">{staff.name}</div>
+                                        <div className="text-lg font-bold text-red-700">{staff.progress}%</div>
                                       </div>
-                                    ))
-                                  }
-                                  {sortedStaffMembers.filter(staff => staff.progress < 40).length === 0 && (
-                                    <div className="text-center p-4 text-gray-500">
-                                      <p>No staff members with low completion rates found.</p>
+                                      <div className="text-xs text-red-600">{staff.completedTasks}/{staff.totalTasks} completed</div>
+                                      <div className="w-full h-1.5 bg-red-100 rounded-full mt-2">
+                                        <div className="h-full bg-red-500 rounded-full" style={{ width: `${staff.progress}%` }}></div>
+                                      </div>
                                     </div>
-                                  )}
-                                </div>
+                                  ))
+                                }
+                                {sortedStaffMembers.filter(staff => staff.progress < 40).length === 0 && (
+                                  <div className="text-sm text-gray-400 italic col-span-full">No low performers.</div>
+                                )}
                               </div>
                             </div>
-
-                            {/* No assigned tasks section */}
-                            {departmentData.staffMembers.filter(staff => staff.totalTasks === 0).length > 0 && (
-                              <div className="rounded-md border border-gray-200">
-                                <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
-                                  <h3 className="text-lg font-medium text-gray-700">No Tasks Assigned</h3>
-                                  <p className="text-sm text-gray-600">
-                                    {dashboardType === "delegation" 
-                                      ? "Staff with no tasks in delegation sheet"
-                                      : "Staff with no tasks assigned for current period"
-                                    }
-                                  </p>
-                                </div>
-                                <div className="p-4">
-                                  <div className="space-y-4">
-                                    {departmentData.staffMembers
-                                      .filter(staff => staff.totalTasks === 0)
-                                      .map((staff) => (
-                                        <div
-                                          key={staff.id}
-                                          className="flex items-center justify-between p-3 border border-gray-100 rounded-md bg-gray-50"
-                                        >
-                                          <div className="flex items-center gap-2">
-                                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-gray-500 to-gray-600 flex items-center justify-center">
-                                              <span className="text-sm font-medium text-white">{staff.name.charAt(0)}</span>
-                                            </div>
-                                            <div>
-                                              <p className="font-medium text-gray-700">{staff.name}</p>
-                                              <p className="text-xs text-gray-600">
-                                                {dashboardType === "delegation" 
-                                                  ? "No tasks in delegation sheet"
-                                                  : "No tasks assigned up to today"
-                                                }
-                                              </p>
-                                            </div>
-                                          </div>
-                                          <div className="text-lg font-bold text-gray-600">N/A</div>
-                                        </div>
-                                      ))
-                                    }
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </>
+                          </div>
                         );
                       })()}
                     </>
                   ) : (
-                    <div className="text-center p-8 text-gray-500">
+                    <div className="text-center p-12 text-gray-500 bg-gray-50 rounded-lg">
                       <p>
                         {dashboardType === "delegation"
                           ? "No delegation data available."
